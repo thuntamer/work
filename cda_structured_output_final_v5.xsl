@@ -1,113 +1,175 @@
-<?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="1.0"
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
     xmlns:hl7="urn:hl7-org:v3"
     exclude-result-prefixes="hl7">
 
-  <xsl:output method="xml" indent="yes"/>
+  <!-- 1) Output HTML -->
+  <xsl:output method="html" omit-xml-declaration="yes" indent="yes"/>
 
-  <!-- Entry-point: match the ClinicalDocument in HL7 namespace -->
+  <!-- Entry point -->
   <xsl:template match="/hl7:ClinicalDocument">
-    <CDA_Summary>
-      <!-- Patient Demographics -->
-      <PatientDemographics>
-        <Name>
-          <xsl:for-each select="hl7:recordTarget/hl7:patientRole/hl7:patient/hl7:name">
-            <Given><xsl:value-of select="hl7:given"/></Given>
-            <Family><xsl:value-of select="hl7:family"/></Family>
-          </xsl:for-each>
-        </Name>
-        <Gender><xsl:value-of select="hl7:recordTarget/hl7:patientRole/hl7:patient/hl7:administrativeGenderCode/@displayName"/></Gender>
-        <BirthTime><xsl:value-of select="hl7:recordTarget/hl7:patientRole/hl7:patient/hl7:birthTime/@value"/></BirthTime>
-        <Addresses>
+    <html>
+      <head>
+        <title>CDA Summary</title>
+        <style>
+          body { font-family: sans-serif; margin:1em; }
+          h1,h2 { color: #2a4d69; }
+          table { border-collapse: collapse; width:100%; margin-bottom:1.5em; }
+          th, td { border:1px solid #ccc; padding:0.4em; text-align:left; }
+          th { background:#e0e0e0; }
+          pre { background:#f7f7f7; padding:1em; overflow:auto; }
+        </style>
+      </head>
+      <body>
+        <h1>Patient Summary</h1>
+
+        <!-- Demographics -->
+        <h2>Patient Demographics</h2>
+        <table>
+          <tr><th>Field</th><th>Value</th></tr>
+          <tr>
+            <td>Name</td>
+            <td>
+              <xsl:for-each select="hl7:recordTarget/hl7:patientRole/hl7:patient/hl7:name">
+                <xsl:value-of select="hl7:given"/> <xsl:value-of select="hl7:family"/>
+              </xsl:for-each>
+            </td>
+          </tr>
+          <tr>
+            <td>Gender</td>
+            <td>
+              <xsl:value-of select="hl7:recordTarget/hl7:patientRole/hl7:patient/
+                                   hl7:administrativeGenderCode/@displayName"/>
+            </td>
+          </tr>
+          <tr>
+            <td>Birth Time</td>
+            <td>
+              <xsl:value-of select="hl7:recordTarget/hl7:patientRole/hl7:patient/
+                                   hl7:birthTime/@value"/>
+            </td>
+          </tr>
           <xsl:for-each select="hl7:recordTarget/hl7:patientRole/hl7:addr">
-            <Address>
-              <Street><xsl:value-of select="hl7:streetAddressLine"/></Street>
-              <City><xsl:value-of select="hl7:city"/></City>
-              <State><xsl:value-of select="hl7:state"/></State>
-              <PostalCode><xsl:value-of select="hl7:postalCode"/></PostalCode>
-            </Address>
+            <tr>
+              <td>Address</td>
+              <td>
+                <xsl:value-of select="hl7:streetAddressLine"/>,
+                <xsl:value-of select="hl7:city"/>,
+                <xsl:value-of select="hl7:state"/>
+                <xsl:value-of select="hl7:postalCode"/>
+              </td>
+            </tr>
           </xsl:for-each>
-        </Addresses>
-      </PatientDemographics>
+        </table>
 
-      <!-- Author & Responsible Party -->
-      <AuthorResponsibleParty>
-        <Author>
-          <Person>
-            <Given><xsl:value-of select="hl7:author/hl7:assignedAuthor/hl7:assignedPerson/hl7:name/hl7:given"/></Given>
-            <Family><xsl:value-of select="hl7:author/hl7:assignedAuthor/hl7:assignedPerson/hl7:name/hl7:family"/></Family>
-          </Person>
-          <Organization><xsl:value-of select="hl7:author/hl7:assignedAuthor/hl7:representedOrganization/hl7:name"/></Organization>
-        </Author>
-      </AuthorResponsibleParty>
+        <!-- Immunizations -->
+        <h2>Immunizations</h2>
+        <table>
+          <tr><th>Vaccine</th><th>LOINC</th><th>Date</th><th>Status</th></tr>
+          <xsl:for-each select="hl7:component/hl7:structuredBody/
+                                hl7:component/hl7:section[hl7:code/@code='11369-6']/
+                                hl7:entry/hl7:substanceAdministration">
+            <tr>
+              <td>
+                <xsl:value-of select="hl7:consumable/hl7:manufacturedProduct/
+                                     hl7:manufacturedMaterial/hl7:code/@displayName"/>
+              </td>
+              <td>
+                <xsl:value-of select="hl7:consumable/hl7:manufacturedProduct/
+                                     hl7:manufacturedMaterial/hl7:code/@code"/>
+              </td>
+              <td><xsl:value-of select="hl7:effectiveTime/@value"/></td>
+              <td><xsl:value-of select="hl7:statusCode/@code"/></td>
+            </tr>
+          </xsl:for-each>
+        </table>
 
-      <!-- Sections -->
-      <Sections>
-        <xsl:for-each select="hl7:component/hl7:structuredBody/hl7:component/hl7:section">
-          <xsl:variable name="code" select="hl7:code/@code"/>
-          <xsl:variable name="title" select="hl7:title"/>
-          <Section Code="{string($code)}" Title="{string($title)}">
-            <!-- Narrative tables take priority -->
-            <xsl:choose>
-              <xsl:when test="hl7:text/hl7:table">
-                <NarrativeTable>
-                  <xsl:copy-of select="hl7:text/hl7:table"/>
-                </NarrativeTable>
-              </xsl:when>
-              <!-- Immunizations -->
-              <xsl:when test="$code='11369-6'">
-                <Immunizations>
-                  <xsl:for-each select="hl7:entry/hl7:substanceAdministration">
-                    <Immunization>
-                      <Vaccine>
-                        <Name><xsl:value-of select="hl7:consumable/hl7:manufacturedProduct/hl7:manufacturedMaterial/hl7:code/@displayName"/></Name>
-                        <LoincCode><xsl:value-of select="hl7:consumable/hl7:manufacturedProduct/hl7:manufacturedMaterial/hl7:code/@code"/></LoincCode>
-                      </Vaccine>
-                      <Date><xsl:value-of select="hl7:effectiveTime/@value"/></Date>
-                      <Status><xsl:value-of select="hl7:statusCode/@code"/></Status>
-                    </Immunization>
-                  </xsl:for-each>
-                </Immunizations>
-              </xsl:when>
-              <!-- Medications Administered -->
-              <xsl:when test="$code='29549-3'">
-                <Medications>
-                  <xsl:for-each select="hl7:entry/hl7:substanceAdministration">
-                    <Medication>
-                      <Name><xsl:value-of select="hl7:consumable/hl7:manufacturedProduct/hl7:manufacturedMaterial/hl7:code/@displayName"/></Name>
-                      <RxNormCode><xsl:value-of select="hl7:consumable/hl7:manufacturedProduct/hl7:manufacturedMaterial/hl7:code/@code"/></RxNormCode>
-                      <Dose><xsl:value-of select="hl7:doseQuantity/@value"/></Dose>
-                      <Route><xsl:value-of select="hl7:routeCode/@displayName"/></Route>
-                      <Date><xsl:value-of select="hl7:effectiveTime/@value"/></Date>
-                    </Medication>
-                  </xsl:for-each>
-                </Medications>
-              </xsl:when>
-              <!-- Problems -->
-              <xsl:when test="$code='11450-4'">
-                <Problems>
-                  <xsl:for-each select="hl7:entry/hl7:observation">
-                    <Problem>
-                      <Condition><xsl:value-of select="hl7:code/@displayName"/></Condition>
-                      <ICD10Code><xsl:value-of select="hl7:code/@code"/></ICD10Code>
-                      <Status><xsl:value-of select="hl7:value/@displayName"/></Status>
-                      <Onset><xsl:value-of select="hl7:effectiveTime/hl7:low/@value"/></Onset>
-                    </Problem>
-                  </xsl:for-each>
-                </Problems>
-              </xsl:when>
-              <!-- Fallback narrative -->
-              <xsl:otherwise>
-                <Narrative>
-                  <xsl:copy-of select="hl7:text/node()"/>
-                </Narrative>
-              </xsl:otherwise>
-            </xsl:choose>
-          </Section>
-        </xsl:for-each>
-      </Sections>
-    </CDA_Summary>
+        <!-- Medications -->
+        <h2>Medications</h2>
+        <table>
+          <tr><th>Name</th><th>RxNorm</th><th>Dose</th><th>Route</th><th>Date</th></tr>
+          <xsl:for-each select="hl7:component/hl7:structuredBody/
+                                hl7:component/hl7:section[hl7:code/@code='29549-3']/
+                                hl7:entry/hl7:substanceAdministration">
+            <tr>
+              <td>
+                <xsl:value-of select="hl7:consumable/.../hl7:code/@displayName"/>
+              </td>
+              <td><xsl:value-of select="hl7:consumable/.../hl7:code/@code"/></td>
+              <td><xsl:value-of select="hl7:doseQuantity/@value"/></td>
+              <td><xsl:value-of select="hl7:routeCode/@displayName"/></td>
+              <td><xsl:value-of select="hl7:effectiveTime/@value"/></td>
+            </tr>
+          </xsl:for-each>
+        </table>
+
+        <!-- Problems -->
+        <h2>Problems</h2>
+        <table>
+          <tr><th>Condition</th><th>ICD-10</th><th>Status</th><th>Onset</th></tr>
+          <xsl:for-each select="hl7:component/hl7:structuredBody/
+                                hl7:component/hl7:section[hl7:code/@code='11450-4']/
+                                hl7:entry/hl7:observation">
+            <tr>
+              <td><xsl:value-of select="hl7:code/@displayName"/></td>
+              <td><xsl:value-of select="hl7:code/@code"/></td>
+              <td><xsl:value-of select="hl7:value/@displayName"/></td>
+              <td><xsl:value-of select="hl7:effectiveTime/hl7:low/@value"/></td>
+            </tr>
+          </xsl:for-each>
+        </table>
+
+        <!-- Lab Results -->
+        <h2>Lab Results</h2>
+        <table>
+          <tr><th>Test</th><th>LOINC</th><th>Value</th><th>Units</th><th>Date</th></tr>
+          <xsl:for-each select="hl7:component/hl7:structuredBody/
+                                hl7:component/hl7:section[hl7:code/@code='30954-2']/
+                                hl7:entry/hl7:observation">
+            <tr>
+              <td><xsl:value-of select="hl7:code/@displayName"/></td>
+              <td><xsl:value-of select="hl7:code/@code"/></td>
+              <td><xsl:value-of select="hl7:value/@value"/></td>
+              <td><xsl:value-of select="hl7:value/@unit"/></td>
+              <td><xsl:value-of select="hl7:effectiveTime/hl7:low/@value"/></td>
+            </tr>
+          </xsl:for-each>
+        </table>
+
+        <!-- Encounters -->
+        <h2>Encounters</h2>
+        <table>
+          <tr><th>Type</th><th>Date</th><th>Location</th></tr>
+          <xsl:for-each select="hl7:component/hl7:structuredBody/
+                                hl7:component/hl7:section[hl7:code/@code='46241-6']/
+                                hl7:entry/hl7:encounter">
+            <tr>
+              <td><xsl:value-of select="hl7:code/@displayName"/></td>
+              <td><xsl:value-of select="hl7:effectiveTime/@value"/></td>
+              <td>
+                <xsl:value-of select="hl7:location/hl7:healthCareFacility/
+                                     hl7:location/hl7:name"/>
+              </td>
+            </tr>
+          </xsl:for-each>
+        </table>
+
+        <!-- 2) XML Summary for QA -->
+        <h2>XML Summary (for Data Quality)</h2>
+        <pre>
+<xsl:text disable-output-escaping="yes">&lt;CDA_Summary&gt;</xsl:text>
+  <!-- copy exactly what you see in the HTML tables, but as raw XML -->
+  <xsl:for-each select="hl7:recordTarget">
+    <xsl:text disable-output-escaping="yes">&#10;  &lt;PatientDemographics&gt;</xsl:text>
+      <!-- name, gender, birthTime, addr -->
+    <xsl:copy-of select="hl7:patientRole"/>
+    <xsl:text disable-output-escaping="yes">&#10;  &lt;/PatientDemographics&gt;</xsl:text>
+  </xsl:for-each>
+  <!-- immunizations, medications, problems, labs, encounters sections -->
+  <!-- you can replicate each block with <xsl:copy-of select="..."/> -->
+<xsl:text disable-output-escaping="yes">&#10;&lt;/CDA_Summary&gt;</xsl:text>
+        </pre>
+      </body>
+    </html>
   </xsl:template>
-
 </xsl:stylesheet>
