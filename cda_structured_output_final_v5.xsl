@@ -60,7 +60,10 @@
                 <Immunizations>
                   <xsl:for-each select="hl7:entry/hl7:substanceAdministration">
                     <Immunization>
-                      <Vaccine><xsl:value-of select="hl7:consumable/hl7:manufacturedProduct/hl7:manufacturedMaterial/hl7:code/@displayName"/></Vaccine>
+                      <Vaccine>
+                        <Name><xsl:value-of select="hl7:consumable/hl7:manufacturedProduct/hl7:manufacturedMaterial/hl7:code/@displayName"/></Name>
+                        <LoincCode><xsl:value-of select="hl7:consumable/hl7:manufacturedProduct/hl7:manufacturedMaterial/hl7:code/@code"/></LoincCode>
+                      </Vaccine>
                       <Date><xsl:value-of select="hl7:effectiveTime/@value"/></Date>
                       <Status><xsl:value-of select="hl7:statusCode/@code"/></Status>
                     </Immunization>
@@ -73,6 +76,7 @@
                   <xsl:for-each select="hl7:entry/hl7:substanceAdministration">
                     <Medication>
                       <Name><xsl:value-of select="hl7:consumable/hl7:manufacturedProduct/hl7:manufacturedMaterial/hl7:code/@displayName"/></Name>
+                      <RxNormCode><xsl:value-of select="hl7:consumable/hl7:manufacturedProduct/hl7:manufacturedMaterial/hl7:code/@code"/></RxNormCode>
                       <Dose><xsl:value-of select="hl7:doseQuantity/@value"/></Dose>
                       <Route><xsl:value-of select="hl7:routeCode/@displayName"/></Route>
                       <Date><xsl:value-of select="hl7:effectiveTime/@value"/></Date>
@@ -86,8 +90,8 @@
                   <xsl:for-each select="hl7:entry/hl7:observation">
                     <Problem>
                       <Condition><xsl:value-of select="hl7:code/@displayName"/></Condition>
+                      <ICD10Code><xsl:value-of select="hl7:code/@code"/></ICD10Code>
                       <Status><xsl:value-of select="hl7:value/@displayName"/></Status>
-                      <Code><xsl:value-of select="hl7:value/@code"/></Code>
                       <Onset><xsl:value-of select="hl7:effectiveTime/hl7:low/@value"/></Onset>
                     </Problem>
                   </xsl:for-each>
