@@ -35,25 +35,62 @@
         <hr/>
 
         <!-- Patient Demographics -->
-        <xsl:call-template name="patient-demographics"/>
+        <h2><span class="icon">👤</span>Patient Demographics</h2>
+        <p>
+          <strong>Name:</strong> <xsl:value-of select="ClinicalDocument/recordTarget/patientRole/patient/name/given"/> <xsl:value-of select="ClinicalDocument/recordTarget/patientRole/patient/name/family"/><br/>
+          <strong>Gender:</strong> <xsl:value-of select="ClinicalDocument/recordTarget/patientRole/patient/administrativeGenderCode/@displayName"/><br/>
+          <strong>Birth Date:</strong> <xsl:value-of select="ClinicalDocument/recordTarget/patientRole/patient/birthTime/@value"/><br/>
+          <strong>Race:</strong> <xsl:value-of select="ClinicalDocument/recordTarget/patientRole/patient/raceCode/@displayName"/><br/>
+          <strong>Ethnicity:</strong> <xsl:value-of select="ClinicalDocument/recordTarget/patientRole/patient/ethnicGroupCode/@displayName"/><br/>
+          <strong>Address:</strong> <xsl:value-of select="ClinicalDocument/recordTarget/patientRole/addr/streetAddressLine"/>, <xsl:value-of select="ClinicalDocument/recordTarget/patientRole/addr/city"/>, <xsl:value-of select="ClinicalDocument/recordTarget/patientRole/addr/state"/> <xsl:value-of select="ClinicalDocument/recordTarget/patientRole/addr/postalCode"/><br/>
+          <strong>Phone:</strong> <xsl:value-of select="ClinicalDocument/recordTarget/patientRole/telecom[@use='HP']/@value"/><br/>
+          <strong>Email:</strong> <xsl:value-of select="ClinicalDocument/recordTarget/patientRole/telecom[@use='H']/@value"/>
+        </p>
 
-        <!-- Author -->
-        <xsl:call-template name="document-author"/>
+        <!-- Document Author -->
+        <h2><span class="icon">✍️</span>Document Author</h2>
+        <p>
+          <strong>Name:</strong> <xsl:value-of select="ClinicalDocument/author/assignedAuthor/assignedPerson/name/given"/> <xsl:value-of select="ClinicalDocument/author/assignedAuthor/assignedPerson/name/family"/><br/>
+          <strong>Organization:</strong> <xsl:value-of select="ClinicalDocument/author/assignedAuthor/representedOrganization/name"/><br/>
+          <strong>Time:</strong> <xsl:value-of select="ClinicalDocument/author/time/@value"/>
+        </p>
 
         <!-- Document Type -->
-        <xsl:call-template name="document-type"/>
+        <h2><span class="icon">📄</span>Document Type</h2>
+        <p>
+          <strong>Type:</strong> <xsl:value-of select="ClinicalDocument/code/@displayName"/>
+        </p>
 
         <!-- Encounter Info -->
-        <xsl:call-template name="encounter-info"/>
+        <h2><span class="icon">🏥</span>Encounter Information</h2>
+        <p>
+          <xsl:for-each select="ClinicalDocument/componentOf/encompassingEncounter" >
+            <strong>Encounter Time:</strong> <xsl:value-of select="effectiveTime/@value"/><br/>
+            <strong>Facility:</strong> <xsl:value-of select="location/healthCareFacility/location/name"/>
+          </xsl:for-each>
+        </p>
 
         <!-- Custodian -->
-        <xsl:call-template name="custodian-info"/>
+        <h2><span class="icon">📁</span>Custodian</h2>
+        <p>
+          <strong>Organization:</strong> <xsl:value-of select="ClinicalDocument/custodian/assignedCustodian/representedCustodianOrganization/name"/>
+        </p>
 
         <!-- Legal Authenticator -->
-        <xsl:call-template name="legal-authenticator"/>
+        <h2><span class="icon">🖊</span>Legal Authenticator</h2>
+        <p>
+          <strong>Name:</strong> <xsl:value-of select="ClinicalDocument/legalAuthenticator/assignedEntity/assignedPerson/name/given"/> <xsl:value-of select="ClinicalDocument/legalAuthenticator/assignedEntity/assignedPerson/name/family"/><br/>
+          <strong>Time:</strong> <xsl:value-of select="ClinicalDocument/legalAuthenticator/time/@value"/>
+        </p>
 
         <!-- Related Documents -->
-        <xsl:call-template name="related-documents"/>
+        <h2><span class="icon">🔗</span>Related Documents</h2>
+        <p>
+          <xsl:for-each select="ClinicalDocument/relatedDocument">
+            <strong>Type:</strong> <xsl:value-of select="@typeCode"/><br/>
+            <strong>Document ID:</strong> <xsl:value-of select="parentDocument/id/@root"/><br/>
+          </xsl:for-each>
+        </p>
 
         <h2>📑 Structured Body</h2>
         <xsl:apply-templates select="ClinicalDocument/component/structuredBody/component"/>
@@ -68,14 +105,12 @@
               link.href = "#section" + i;
               link.textContent = el.textContent;
               toc.appendChild(link);
-
               const back = document.createElement("a");
               back.href = "#top";
               back.className = "back-to-top";
               back.innerText = "↑ Back to Top";
               el.insertAdjacentElement("afterend", back);
             });
-
             document.getElementById("downloadBtn").onclick = () => {
               const blob = new Blob(["<!DOCTYPE html><html>" + document.documentElement.innerHTML + "</html>"], { type: "text/html" });
               const url = URL.createObjectURL(blob);
@@ -85,7 +120,6 @@
               a.click();
               URL.revokeObjectURL(url);
             };
-
             document.getElementById("printBtn").onclick = () => {
               window.print();
             };
@@ -95,16 +129,6 @@
     </html>
   </xsl:template>
 
-  <!-- Simplified patient demographics example -->
-  <xsl:template name="patient-demographics">
-    <h2><span class="icon">👤</span>Patient Demographics</h2>
-    <p>
-      <xsl:value-of select="ClinicalDocument/recordTarget/patientRole/patient/name/given"/> 
-      <xsl:value-of select="ClinicalDocument/recordTarget/patientRole/patient/name/family"/>
-    </p>
-  </xsl:template>
-
-  <!-- Example structured body section template -->
   <xsl:template match="component">
     <xsl:variable name="sectionCode" select="section/code/@code"/>
     <xsl:variable name="title" select="section/title"/>
@@ -116,10 +140,7 @@
     </details>
   </xsl:template>
 
-  <!-- Render embedded HTML text blocks (common in CDA) -->
   <xsl:template match="section/text">
     <xsl:copy-of select="node()"/>
   </xsl:template>
-
-  <!-- Additional templates (document-author, custodian-info, etc.) would follow the same model -->
 </xsl:stylesheet>
