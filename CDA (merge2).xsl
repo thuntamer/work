@@ -1211,7 +1211,7 @@
 
             <!-- 2.B Medication Administration section (code 29549-3) -->
             <xsl:when test="hl7:code/@code = '29549-3'">
-                <xsl:call-template name="renderMedAdmins"/>
+                <xsl:call-template name="renderMedicationAdmin"/>
             </xsl:when>
 
             <!-- 2.C Encounters / Visits (code 46240-8 OR header encompassingEncounter) -->
