@@ -7385,5 +7385,25 @@
                 </tbody>
             </table>
         </xsl:if>
+        <xsl:key name="allCodes" match="//code[not(@nullFlavor)]" use="concat(@code,'|',@codeSystem)" />
+
+<xsl:template match="health">
+  <xsl:copy>
+    <xsl:apply-templates select="@*|node()"/>
+
+    <!-- extra section -->
+    <codes>
+      <!-- iterate over each distinct code/codeSystem combination -->
+      <xsl:for-each select="//code[generate-id(.) = generate-id(key('allCodes',concat(@code,'|',@codeSystem))[1])]">
+        <code
+          value="{@code}"
+          system="{@codeSystem}"
+          systemName="{@codeSystemName}"
+          displayName="{@displayName}"
+        />
+      </xsl:for-each>
+    </codes>
+  </xsl:copy>
+</xsl:template>
     </xsl:template>
 </xsl:stylesheet>
